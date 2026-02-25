@@ -22,10 +22,10 @@ def gerar_relatorio_planta(data: DateLike) -> Tuple[str, tuple]:
     Retorna a query SQL e os parâmetros para execução.
 
     O parâmetro data deve estar no formato 'YYYY-MM-DD' ou ser um date.
-    Passa um objeto date ao pyodbc para o driver SQL Server fazer o bind correto
-    (evita erro "Incorrect syntax near 'A'" ao usar string).
+    A data é passada como string no formato ISO para compatibilidade com
+    o driver ODBC SQL Server (binding de tipo date não é suportado por alguns drivers).
     """
-    if isinstance(data, str):
-        data = date.fromisoformat(data)
+    if isinstance(data, date):
+        data = data.isoformat()
     sql = carregar_query_planta()
-    return sql, (data,)
+    return sql, (str(data),)
