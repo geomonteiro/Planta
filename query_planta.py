@@ -22,10 +22,16 @@ def gerar_relatorio_planta(data: DateLike) -> Tuple[str, tuple]:
     Retorna a query SQL e os parâmetros para execução.
 
     O parâmetro data deve estar no formato 'YYYY-MM-DD' ou ser um date.
-    A data é passada como string no formato ISO para compatibilidade com
-    o driver ODBC SQL Server (binding de tipo date não é suportado por alguns drivers).
+    O literal da data é injetado na SQL (sem usar parâmetros) para evitar
+    o erro "Incorrect syntax near 'A'" com batches no driver ODBC SQL Server.
     """
     if isinstance(data, date):
         data = data.isoformat()
+    data_str = str(data)
+    # Garante formato YYYY-MM-DD (seguro para injetar como literal)
+    if len(data_str) != 10 or data_str[4] != "-" or data_str[7] != "-" or not data_str.replace("-", "").isdigit():
+        raise ValueError(f"Data deve estar no formato YYYY-MM-DD: {data_str!r}")
     sql = carregar_query_planta()
-    return sql, (str(data),)
+    # Substitui o único ? pelo literal da data (evita bug de binding em batch)
+    sql = sql.replace("SET @Date = ?", f"SET @Date = '{data_str}'", 1)
+    return sql, ()
